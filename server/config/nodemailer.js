@@ -9,15 +9,15 @@ export const sendEmail = async (toEmail, subject, textContent) => {
         );
 
         const emailData = {
-            sender: { email: "hasnainiftikhar930@gmail.com" }, 
+            sender: { email: "hasnainiftikhar930@gmail.com" },
             to: [{ email: toEmail }],
             subject: subject,
             textContent: textContent,
         };
 
-        await apiInstance.sendTransacEmail(emailData);
-
+        const response = await apiInstance.sendTransacEmail(emailData);
+        console.log("Email sent successfully:", response);
     } catch (error) {
-        console.error( error);
+        console.error("Email sending error:", error);
     }
 };

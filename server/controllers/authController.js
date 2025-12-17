@@ -166,7 +166,7 @@ export const sendVerifyOtp = async (req, res) => {
 //Verify User Email
 export const verifyEmail = async (req, res) => {
     try {
-        const userId = req.user.id;   // from token
+        const userId = req.user.id;  
         const { otp } = req.body;
 
         if (!otp) {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext, use } from "react";
+import React, { useState, useRef, useContext, useEffect } from "react";
 import { AppContext } from "../components/context/context";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -6,15 +6,13 @@ import { assets } from "../assets/assets";
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
-  const { backendUrl } = useContext(AppContext);
+  const { backendUrl, isLoggedIn, useData } = useContext(AppContext);
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const inputsRef = useRef([]);
 
-
   const handleChange = (e, index) => {
     const value = e.target.value;
-
     if (!/^[0-9]?$/.test(value)) return;
 
     const newOtp = [...otp];
@@ -22,44 +20,35 @@ const VerifyEmail = () => {
     setOtp(newOtp);
 
     if (value && index < 5) {
-      inputsRef.current[index + 1].focus();
+      inputsRef.current[index + 1]?.focus();
     }
   };
 
   const handleKeyDown = (e, index) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputsRef.current[index - 1].focus();
+      inputsRef.current[index - 1]?.focus();
     }
   };
-
 
   const handlePaste = (e) => {
     const pasteData = e.clipboardData.getData("text").trim();
-
     if (/^\d{6}$/.test(pasteData)) {
       const digits = pasteData.split("");
       setOtp(digits);
-
-     
       digits.forEach((d, i) => {
-        inputsRef.current[i].value = d;
+        if (inputsRef.current[i]) inputsRef.current[i].value = d;
       });
-
-      
-      inputsRef.current[5].focus();
+      inputsRef.current[5]?.focus();
     }
   };
 
- 
   // Submit OTP
   const submitOtp = async () => {
     const code = otp.join("");
-
     if (code.length !== 6) {
       toast.error("Enter complete 6-digit OTP");
       return;
     }
-
     try {
       const response = await fetch(`${backendUrl}/api/auth/verify-email`, {
         method: "POST",
@@ -67,9 +56,7 @@ const VerifyEmail = () => {
         credentials: "include",
         body: JSON.stringify({ otp: code }),
       });
-
       const data = await response.json();
-      console.log("VERIFY RESPONSE:", data);
       const isSuccess =
         data.success === true ||
         data.status === true ||
@@ -82,7 +69,6 @@ const VerifyEmail = () => {
         setTimeout(() => navigate("/", { replace: true }), 500);
         return;
       }
-
       toast.error(data.message || "Invalid OTP");
     } catch (err) {
       console.error(err);
@@ -90,7 +76,6 @@ const VerifyEmail = () => {
     }
   };
 
-  
   // Resend OTP
   const resendOtp = async () => {
     try {
@@ -98,20 +83,14 @@ const VerifyEmail = () => {
         method: "POST",
         credentials: "include",
       });
-
       const data = await response.json();
-
       const isSuccess =
-        data.success === true ||
-        data.status === true ||
-        data.ok === true ||
-        response.ok;
+        data.success === true || data.status === true || data.ok === true || response.ok;
 
       if (!isSuccess) {
         toast.error(data.message || "Failed to send OTP");
         return;
       }
-
       toast.success(data.message || "Verification OTP sent!");
     } catch (err) {
       console.error(err);
@@ -119,9 +98,12 @@ const VerifyEmail = () => {
     }
   };
 
+  // Redirect if already verified
   useEffect(() => {
-    isLoggedIn && useData && useData.isAccountVerified && navigate("/");
-  }, [isLoggedIn, useData]);
+    if (isLoggedIn && useData?.isAccountVerified) {
+      navigate("/", { replace: true });
+    }
+  }, [isLoggedIn, useData, navigate]);
 
   return (
     <div
@@ -136,7 +118,6 @@ const VerifyEmail = () => {
       />
 
       <div className="bg-white/80 backdrop-blur-xl p-10 rounded-2xl shadow-xl w-[90%] max-w-md text-center">
-
         <h1 className="text-3xl font-bold mb-2">Verify Email</h1>
         <p className="text-gray-600 mb-6">
           Enter the 6-digit OTP sent to your email address
